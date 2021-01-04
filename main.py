@@ -152,7 +152,7 @@ def reader():
                     valueList = list(map(int, data[:-2].split(',')))
                     transferInfo(valueList)
             except:
-                print(csvList)
+                #print(csvList)
                 print("Error - Not able to read data")
         else:
             print("Cannot Open Serial Port")
