@@ -1,6 +1,5 @@
 import matplotlib.animation as animation
 import numpy as np
-import pandas as pd
 from matplotlib.pyplot import show, subplots
 import serial
 import time
@@ -8,6 +7,7 @@ import csv
 import threading
 from matplotlib import style
 import sys
+import datetime
 import largeList
 
 """
@@ -112,20 +112,42 @@ def animate(frame):
     axesLabel(2)
 
 
+def convertTime(unixTime):
+    actualTime = datetime.datetime.fromtimestamp(unixTime).strftime('%Y-%m-%d %H:%M:%S')
+    return actualTime
+
+
 def transferInfo(valueList):
     global isCSVChanged, isPlotChanged
-    print(valueList)
-    plotList.append(valueList)
+    appendList = valueList[7:11].copy()
+    valueList[1] = convertTime(valueList[1])
+    print(appendList)
+    plotList.append(appendList)
     isPlotChanged = True
     info = {
-        "TEMPERATURE": valueList[0],
-        "ALTITUDE": valueList[1],
-        "AVG SPEED": valueList[2],
-        "PRESSURE": valueList[3],
+        "<TEAM_ID>": valueList[0],
+        "<MISSION_TIME>": valueList[1],
+        "<PACKET_COUNT>": valueList[2],
+        "<PACKET_TYPE>": valueList[3],
+        "<MODE>": valueList[4],
+        "<SP1_RELEASED>": valueList[5],
+        "<SP2_RELEASED>": valueList[6],
+        "TEMPERATURE": valueList[7],
+        "ALTITUDE": valueList[8],
+        "AVG SPEED": valueList[9],
+        "PRESSURE": valueList[10],
+        "<GPS_LATITUDE>": valueList[11],
+        "<GPS_LONGITUDE>": valueList[12],
+        "<GPS_ALTITUDE>": valueList[13],
+        "<GPS_SATS>": valueList[14],
+        "<SOFTWARE_STATE>": valueList[15],
+        "<SP1_PACKET_COUNT>": valueList[16],
+        "<SP2_PACKET_COUNT>": valueList[17],
+        "<CMD_ECHO>": valueList[18],
     }
     csvList.append(info)
     isCSVChanged = True
-    print(info)
+    # print(info)
 
 
 def reader():
@@ -135,11 +157,11 @@ def reader():
     while True:
         try:
             ser = serial.Serial(port='COM9', baudrate=9600, bytesize=serial.EIGHTBITS,
-                            parity=serial.PARITY_NONE, timeout=3)
+                                parity=serial.PARITY_NONE, timeout=3)
         except:
             continue
 
-        time.sleep(3)   # Logic???
+        time.sleep(3)  # Logic???
 
         try:
             ser.isOpen()
@@ -154,7 +176,6 @@ def reader():
                     time.sleep(1)
                     data = ser.readline().decode('ascii')
                     valueList = list(map(int, data[:-2].split(',')))
-                    valueList = valueList[7:11]
                     transferInfo(valueList)
             except:
                 print(csvList)

@@ -1,5 +1,12 @@
 import sys
 from itertools import chain
+import datetime
+
+print(
+    datetime.datetime.fromtimestamp(
+        int("1284105682")
+    ).strftime('%Y-%m-%d %H:%M:%S')
+)
 
 # TO FIX : Insert mein shift hote hue last element starting mein aa jaata hai
 
