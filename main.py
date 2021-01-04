@@ -14,6 +14,8 @@ ISSUES:
 ** CSV aur plotting dono mein 0000 direct append ho
 ** CSV mein disconnect aur connect par number of 0000 packets not equal to ideally received packets
 ** What is the policy on missed packets?
+** Whenever I disconnect and reconnect, hamesha 1 se kyun shuru hota hai???
+
 
 1. Agar arduino se delay toh not writing to CSV ---- DONE
 2. Memory Error ka safeguard --- DONE
@@ -21,21 +23,15 @@ ISSUES:
 4. Whenever I disconnect and reconnect, hamesha 1 se kyun shuru hota hai???
 """
 
-column, current_time, figure, axes, csvList, csvCounter, isPlotChanged, csvTime, csvBuffer = None, None, None, None, None, None, None, None, None
-x_lim, shownOnScreen, flag, check, y, df, plotList, timer, csvLen, readTime, plotClear, csvClear, plotBuffer = None, None, None, None, None, None, None, None, None, None, None, None, None
-
-
-# def createList():
-#    global plotList
-#    plotList = []
-
-
-def copyList(list1, list2):
-    list1 = list2.copy()
+column, current_time, figure, axes, csvList, =  None, None, None, None, None
+csvCounter, isPlotChanged, csvTime, csvBuffer = None, None, None, None
+x_lim, shownOnScreen, flag, y = None, None, None, None
+plotList, timer, csvLen, readTime, plotClear, csvClear, plotBuffer = None, None, None, None, None, None, None
 
 
 def initialise():
-    global column, csvLen, plotClear, csvClear, plotBuffer, csvBuffer, readTime, current_time, csvTime, figure, axes, x_lim, shownOnScreen, flag, check, y, plotList, csvList, csvCounter, timer, isPlotChanged
+    global column, csvLen, plotClear, csvClear, plotBuffer, csvBuffer, readTime, current_time, csvTime, figure, axes
+    global x_lim, shownOnScreen, flag, y, plotList, csvList, csvCounter, timer, isPlotChanged
 
     plotList = []
     csvList = []
@@ -52,7 +48,6 @@ def initialise():
     csvCounter = 0
     csvLen = 0
     flag = 1
-    check = []
     current_time = 0
 
     column = np.array(['TEMPERATURE', 'ALTITUDE', 'AVG SPEED', 'PRESSURE'])
@@ -80,7 +75,7 @@ def axesLabel(i):
 
 
 def plotter(index):
-    global y, df, column, current_time, axes, plotList, isPlotChanged, timer
+    global y, column, current_time, axes, plotList, isPlotChanged, timer
     if isPlotChanged:
         yValues = plotList[current_time]
     else:
@@ -95,7 +90,7 @@ def plotter(index):
 
 
 def clearPlotList():
-    global shownOnScreen, current_time, df, flag, isPlotChanged, timer, plotClear, plotBuffer
+    global current_time, flag, timer, plotClear, plotBuffer
     plotClear = True
     i = 0
     while current_time < len(plotList) - 1:
@@ -110,7 +105,7 @@ def clearPlotList():
 
 
 def animate(frame):
-    global shownOnScreen, current_time, df, flag, isPlotChanged, timer, plotClear
+    global shownOnScreen, current_time, flag, isPlotChanged, timer
     timer += 1
     if timer % 40 == 0:
         clearPlotList()
@@ -139,7 +134,7 @@ def convertTime(unixTime):
 
 
 def transferInfo(valueList):
-    global isPlotChanged, plotClear, csvBuffer, plotBuffer
+    global isPlotChanged, plotClear, csvBuffer, plotBuffer, csvClear
     appendList = valueList[7:11].copy()
     valueList[1] = convertTime(valueList[1])
     print(appendList)
@@ -152,7 +147,6 @@ def transferInfo(valueList):
         csvBuffer.append(valueList.copy())
     else:
         csvList.append(valueList.copy())
-    # print(info)
 
 
 def reader():
@@ -198,7 +192,7 @@ def animationPlot():
 
 
 def csvMaker():
-    global csvList, plotList, csvLen, csvTime, csvBuffer, csvClear
+    global csvList, csvLen, csvTime, csvBuffer, csvClear
     fieldnames = ["<TEAM_ID>", "<MISSION_TIME>", "<PACKET_COUNT>", "<PACKET_TYPE>", "<MODE>", "<SP1_RELEASED>",
                   "<SP2_RELEASED>", "TEMPERATURE", "ALTITUDE", "AVG SPEED", "PRESSURE", "<GPS_LATITUDE>",
                   "<GPS_LONGITUDE>", "<GPS_ALTITUDE>", "<GPS_SATS>", "<SOFTWARE_STATE>", "<SP1_PACKET_COUNT>",
