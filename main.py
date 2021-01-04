@@ -12,14 +12,14 @@ import largeList
 
 """
 ISSUES: 
-1. Agar arduino se delay toh not writing to CSV
+1. Agar arduino se delay toh not writing to CSV ---- DONE
 2. Memory Error ka safeguard
 3. Plotting ka format consistent karna hai    ----- DONE
 4. If no file already then CSV is created after script stops
 """
 
 column, current_time, figure, axes, csvList, csvCounter, isPlotChanged = None, None, None, None, None, None, None
-x_lim, store, flag, check, y, df, plotList, isCSVChanged, timer, csvLen = None, None, None, None, None, None, None, None, None, None
+x_lim, shownOnScreen, flag, check, y, df, plotList, timer, csvLen = None, None, None, None, None, None, None, None, None
 
 
 # def createList():
@@ -32,14 +32,13 @@ def copyList(list1, list2):
 
 
 def initialise():
-    global column, csvLen, current_time, figure, axes, x_lim, store, flag, check, y, plotList, csvList, csvCounter, isCSVChanged, timer, isPlotChanged
+    global column, csvLen, current_time, figure, axes, x_lim, shownOnScreen, flag, check, y, plotList, csvList, csvCounter, timer, isPlotChanged
 
     plotList = []
     csvList = []
     x_lim = []
-    isCSVChanged = False
     isPlotChanged = False
-    store = 0
+    shownOnScreen = 0
     timer = 0
     csvCounter = 0
     csvLen = 0
@@ -54,20 +53,15 @@ def initialise():
 
     y = {'TEMPERATURE': [], 'ALTITUDE': [], 'AVG SPEED': [], 'PRESSURE': []}
 
-    # row = ["TEMPERATURE","ALTITUDE","AVG SPEED","PRESSURE"]
-    # with open('writtenData.csv', 'a') as datafile:
-    #     csv_writer = csv.writer(datafile)
-    #     csv_writer.writerow(row)
-
 
 def axesLabel(i):
-    global flag, store, axes
+    global flag, shownOnScreen, axes
 
     if i == 1:
-        axes[0].set_xlim(flag, flag + store)
-        axes[1].set_xlim(flag, flag + store)
-        axes[2].set_xlim(flag, flag + store)
-        axes[3].set_xlim(flag, flag + store)
+        axes[0].set_xlim(flag, flag + shownOnScreen)
+        axes[1].set_xlim(flag, flag + shownOnScreen)
+        axes[2].set_xlim(flag, flag + shownOnScreen)
+        axes[3].set_xlim(flag, flag + shownOnScreen)
 
     if i == 2:
         axes[0].set_ylabel('Temperature (C)')
@@ -92,9 +86,9 @@ def plotter(index):
 
 
 def animate(frame):
-    global store, current_time, df, flag, isPlotChanged, timer
+    global shownOnScreen, current_time, df, flag, isPlotChanged, timer
     timer += 1
-    store += 1
+    shownOnScreen += 1
     if current_time < len(plotList) - 1:
         current_time += 1
     else:
@@ -106,7 +100,7 @@ def animate(frame):
     except:
         sys.exit()
 
-    if 35 < store:
+    if 35 < shownOnScreen:
         axesLabel(1)
         flag += 1
 
@@ -119,43 +113,20 @@ def convertTime(unixTime):
 
 
 def transferInfo(valueList):
-    global isCSVChanged, isPlotChanged
+    global isPlotChanged
     appendList = valueList[7:11].copy()
     valueList[1] = convertTime(valueList[1])
     print(appendList)
     plotList.append(appendList)
     isPlotChanged = True
-    """info = {
-        "<TEAM_ID>": valueList[0],
-        "<MISSION_TIME>": valueList[1],
-        "<PACKET_COUNT>": valueList[2],
-        "<PACKET_TYPE>": valueList[3],
-        "<MODE>": valueList[4],
-        "<SP1_RELEASED>": valueList[5],
-        "<SP2_RELEASED>": valueList[6],
-        "TEMPERATURE": valueList[7],
-        "ALTITUDE": valueList[8],
-        "AVG SPEED": valueList[9],
-        "PRESSURE": valueList[10],
-        "<GPS_LATITUDE>": valueList[11],
-        "<GPS_LONGITUDE>": valueList[12],
-        "<GPS_ALTITUDE>": valueList[13],
-        "<GPS_SATS>": valueList[14],
-        "<SOFTWARE_STATE>": valueList[15],
-        "<SP1_PACKET_COUNT>": valueList[16],
-        "<SP2_PACKET_COUNT>": valueList[17],
-        "<CMD_ECHO>": valueList[18],
-    }
-    csvList.append(info)
-    """
     csvList.append(valueList.copy())
-    isCSVChanged = True
     # print(info)
 
 
 def reader():
     global isPlotChanged
     plotList.append("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE")
+    print("Reader Thread running")
 
     while True:
         try:
@@ -188,40 +159,41 @@ def reader():
 
 
 def animationPlot():
+    print("Animation running")
     figure.tight_layout(pad=2)
     plot = animation.FuncAnimation(figure, animate, interval=1000)
     show()
 
 
 def csvMaker():
-    global isCSVChanged, csvList, plotList, csvLen
+    global csvList, plotList, csvLen
     fieldnames = ["<TEAM_ID>", "<MISSION_TIME>", "<PACKET_COUNT>", "<PACKET_TYPE>", "<MODE>", "<SP1_RELEASED>",
                   "<SP2_RELEASED>", "TEMPERATURE", "ALTITUDE", "AVG SPEED", "PRESSURE", "<GPS_LATITUDE>",
                   "<GPS_LONGITUDE>", "<GPS_ALTITUDE>", "<GPS_SATS>", "<SOFTWARE_STATE>", "<SP1_PACKET_COUNT>",
                   "<SP2_PACKET_COUNT>", "<CMD_ECHO>"]
-    t = 1
-    print("abcdef")
-    with open('writtenData.csv', 'w',  newline='') as datafile1:
-        csv_writer = csv.writer(datafile1)
+    firstTimeCSV = 1
+    print("CSV Thread Running \n")
+
+    with open('writtenData.csv', 'w',  newline='') as csvFile:
+        csv_writer = csv.writer(csvFile)
         csv_writer.writerow(fieldnames)
         while True:
             time.sleep(6)   # 6n seconds = 6n +- 1 packets
-            if t == 1:
-                t = 0
+            if firstTimeCSV:
+                firstTimeCSV = False
                 csv_writer.writerows(csvList)
                 csvLen = len(csvList)
-                datafile1.flush()
+                csvFile.flush()
             else:
                 csv_writer.writerows(csvList[csvLen:])
                 csvLen = len(csvList)
-                datafile1.flush()
+                csvFile.flush()
 
 
 if __name__ == '__main__':
     initialise()
     readerThread = threading.Thread(target=reader)
     csvThread = threading.Thread(target=csvMaker)  # csvWriter depending on csvList
-    #plotterThread = threading.Thread(target=animationPlot)  # Plotter depending on plotList
 
     readerThread.start()
     time.sleep(4)
