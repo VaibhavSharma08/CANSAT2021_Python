@@ -188,10 +188,9 @@ def reader():
 
 
 def animationPlot():
-    plot = animation.FuncAnimation(figure, animate, interval=1000)
     figure.tight_layout(pad=2)
+    plot = animation.FuncAnimation(figure, animate, interval=1000)
     show()
-    csvMaker()
 
 
 def csvMaker():
@@ -206,7 +205,7 @@ def csvMaker():
         csv_writer = csv.writer(datafile1)
         csv_writer.writerow(fieldnames)
         while True:
-            time.sleep(6)   # 6n + 2 seconds = 6n packets
+            time.sleep(6)   # 6n seconds = 6n +- 1 packets
             if t == 1:
                 t = 0
                 csv_writer.writerows(csvList)
@@ -221,10 +220,10 @@ def csvMaker():
 if __name__ == '__main__':
     initialise()
     readerThread = threading.Thread(target=reader)
+    csvThread = threading.Thread(target=csvMaker)  # csvWriter depending on csvList
+    #plotterThread = threading.Thread(target=animationPlot)  # Plotter depending on plotList
+
     readerThread.start()
     time.sleep(4)
-#    csvThread = threading.Thread(target=csvMaker())  # csvWriter depending on csvList
-#    csvThread.start()
-    plotterThread = threading.Thread(target=animationPlot())  # Plotter depending on plotList
-    plotterThread.start()
-#    csvMaker()
+    csvThread.start()
+    animationPlot()         # Plotter depending on plotList
