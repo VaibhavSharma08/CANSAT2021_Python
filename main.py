@@ -23,13 +23,13 @@ ISSUES:
 7. Arduino se data veryyyy inconsistent
 """
 
-column, count_time, figure, axes = None, None, None, None
-x_lim, store, flag, check, y, df, dataList = None, None, None, None, None, None, None
+column, count_time, figure, axes, csvList, csvCounter = None, None, None, None, None, None
+x_lim, store, flag, check, y, df, plotList = None, None, None, None, None, None, None
 
 
-def createList():
-    global plotList
-    plotList = []
+#def createList():
+#    global plotList
+#    plotList = []
 
 
 def copyList(list1, list2):
@@ -37,11 +37,13 @@ def copyList(list1, list2):
 
 
 def initialise():
-    global column, count_time, figure, axes, x_lim, store, flag, check, y, dataList
+    global column, count_time, figure, axes, x_lim, store, flag, check, y, plotList, csvList, csvCounter
 
-    dataList = []
+    plotList = []
+    csvList = []
     x_lim = []
     store = 0
+    csvCounter = 0
     flag = 1
     check = []
     count_time = 0
@@ -53,10 +55,10 @@ def initialise():
 
     y = {'TEMPERATURE': [], 'ALTITUDE': [], 'AVG SPEED': [], 'PRESSURE': []}
 
-    row = ["TEMPERATURE","ALTITUDE","AVG SPEED","PRESSURE"]
-    #with open('writtenData.csv', 'a') as datafile:
-    #    csv_writer = csv.writer(datafile)
-    #    csv_writer.writerow(row)
+    # row = ["TEMPERATURE","ALTITUDE","AVG SPEED","PRESSURE"]
+    # with open('writtenData.csv', 'a') as datafile:
+    #     csv_writer = csv.writer(datafile)
+    #     csv_writer.writerow(row)
 
 
 def axesLabel(i):
@@ -76,9 +78,9 @@ def axesLabel(i):
 
 
 def plotter(index):
-    global y, df, column, count_time, axes, dataList
+    global y, df, column, count_time, axes, plotList
 
-    l = list(map(int, dataList[-1].split(',')))
+    l = plotList[-1]
 
     y[column[index]].append(l[index])
     x = np.arange(count_time)
@@ -113,58 +115,44 @@ def reader():
                         parity=serial.PARITY_NONE, timeout=3)
 
     time.sleep(3)
-    fieldnames = ["TEMPERATURE", "ALTITUDE", "AVG SPEED", "PRESSURE"]
     # datafile1 = open('writtenData.csv', 'w')
     # datafile1.write("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE\n")
-    dataList.append("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE")
-    with open('writtenData.csv', 'a') as datafile1:
-        csv_writer = csv.DictWriter(datafile1, fieldnames=fieldnames)
-        # csv_writer.writerow(fieldnames)
+    plotList.append("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE")
+    csvList.append("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE")
+
+    try:
+        ser.isOpen()
+        print("Serial port is open")
+    except:
+        print("Error - Serial Port not Open")
+        exit()
+
+    t = 1
+
+    if ser.isOpen():
         try:
-            ser.isOpen()
-            print("Serial port is open")
-        except:
-            print("Error - Serial Port not Open")
-            exit()
-
-        t = 1
-
-        if ser.isOpen():
-            try:
-                while True:
-                    time.sleep(1)
-                    data = ser.readline().decode('ascii')
-                    if t == 1:
-                        t = 0
-                        l = list(map(int, data[1:-2].split(',')))
-                        print(l)
-                        dataList.append(l)
-                        info = {
-                            "TEMPERATURE": l[0],
-                            "ALTITUDE": l[1],
-                            "AVG SPEED": l[2],
-                            "PRESSURE": l[3],
-                        }
-                    else:
-                        l = list(map(int, data[:-2].split(',')))
-                        print(l)
-                        dataList.append(l)
-                        info = {
-                            "TEMPERATURE": l[0],
-                            "ALTITUDE": l[1],
-                            "AVG SPEED": l[2],
-                            "PRESSURE": l[3],
-                        }
-                    print(info)
-                    csv_writer.writerow(info)
-                    # print("abcdef")
-                    # print(dataWrite[:-1])
-                    # datafile.writerow(dataWrite)
-            except Exception:
-                print(dataList)
-                print("Error - Not able to write data")
-        else:
-            print("Cannot Open Serial Port")
+            while True:
+                time.sleep(1)
+                data = ser.readline().decode('ascii')
+                valueList = list(map(int, data[:-2].split(',')))
+                print(valueList)
+                plotList.append(valueList)
+                csvList.append(valueList)
+                info = {
+                    "TEMPERATURE": valueList[0],
+                    "ALTITUDE": valueList[1],
+                    "AVG SPEED": valueList[2],
+                    "PRESSURE": valueList[3],
+                }
+                print(info)
+                # print("abcdef")
+                # print(dataWrite[:-1])
+                # datafile.writerow(dataWrite)
+        except Exception:
+            print(plotList)
+            print("Error - Not able to write data")
+    else:
+        print("Cannot Open Serial Port")
 
 
 def animationPlot():
@@ -173,15 +161,19 @@ def animationPlot():
     show()
 
 
+def csvMaker():
+    fieldnames = ["TEMPERATURE", "ALTITUDE", "AVG SPEED", "PRESSURE"]
+    with open('writtenData.csv', 'a') as datafile1:
+        csv_writer = csv.DictWriter(datafile1, fieldnames=fieldnames)
+
+
 if __name__ == '__main__':
     initialise()
     readerThread = threading.Thread(target=reader)
     readerThread.start()
 #    print("abc")
     time.sleep(7)
-    plotterThread = threading.Thread(target=animationPlot())
+    plotterThread = threading.Thread(target=animationPlot())  # Plotter depending on plotList
     plotterThread.start()
-
-#    print(sys.maxsize)
-#    time.sleep(7)
-#
+    csvThread = threading.Thread(target=csvMaker())  # Plotter depending on csvList
+    csvThread.start()
