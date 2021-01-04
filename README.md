@@ -24,7 +24,10 @@ csvList -> Data written to CSV file every 6 seconds
 
 **TO DO:**
 
-1. Implement memory safeguards against Memory Errors being caused due to list becoming full.
+1. Implement memory safeguards against Memory Errors being caused due to list becoming full. ------ DONE
+2. 0000 packet should be automatically appended to csvList and plotList instead of having seperate conditions.
+3. Policy on Missed/0000 packets?
+4. Whenever disconnect and reconnect, why does it always start from packet 1?
 
 
 **Created By: Vaibhav Sharma**
