@@ -154,10 +154,11 @@ def reader():
                     time.sleep(1)
                     data = ser.readline().decode('ascii')
                     valueList = list(map(int, data[:-2].split(',')))
+                    valueList = valueList[7:11]
                     transferInfo(valueList)
-            except Exception:
-                # print(csvList)
-                print("Error - Not able to write data")
+            except:
+                print(csvList)
+                print("Error - Not able to read data")
         else:
             print("Cannot Open Serial Port")
 
