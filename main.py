@@ -108,11 +108,11 @@ def animate(frame):
     else:
         isPlotChanged = False
 
-    #try:
-    for index in range(4):
-        plotter(index)
-#except:
-#        sys.exit()
+    try:
+        for index in range(4):
+            plotter(index)
+    except:
+        sys.exit()
 
     if 35 < store:
         axesLabel(1)
@@ -139,34 +139,37 @@ def transferInfo(valueList):
 
 def reader():
     global isPlotChanged
-    ser = serial.Serial(port='COM9', baudrate=9600, bytesize=serial.EIGHTBITS,
-                        parity=serial.PARITY_NONE, timeout=3)
-
-    time.sleep(3)
-    # datafile1 = open('writtenData.csv', 'w')
-    # datafile1.write("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE\n")
     plotList.append("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE")
 
-    try:
-        ser.isOpen()
-        print("Serial port is open")
-    except:
-        print("Error - Serial Port not Open")
-        exit()
-
-    if ser.isOpen():
+    while True:
         try:
-            while True:
-                time.sleep(1)
-                data = ser.readline().decode('ascii')
-                valueList = list(map(int, data[:-2].split(',')))
-                transferInfo(valueList)
-        except Exception:
-            print(csvList)
-            #isPlotChanged = False
-            print("Error - Not able to write data")
-    else:
-        print("Cannot Open Serial Port")
+            ser = serial.Serial(port='COM9', baudrate=9600, bytesize=serial.EIGHTBITS,
+                            parity=serial.PARITY_NONE, timeout=3)
+        except:
+            continue
+
+        time.sleep(3)
+
+        try:
+            ser.isOpen()
+            print("Serial port is open")
+        except:
+            print("Error - Serial Port not Open")
+            exit()
+
+        if ser.isOpen():
+            try:
+                while True:
+                    time.sleep(1)
+                    data = ser.readline().decode('ascii')
+                    valueList = list(map(int, data[:-2].split(',')))
+                    transferInfo(valueList)
+            except Exception:
+                print(csvList)
+                #isPlotChanged = False
+                print("Error - Not able to write data")
+        else:
+            print("Cannot Open Serial Port")
 
 
 def animationPlot():
