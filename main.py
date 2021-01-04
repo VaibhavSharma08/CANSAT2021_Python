@@ -27,8 +27,8 @@ ISSUES:
 7. Arduino se data veryyyy inconsistent
 """
 
-column, count_time, figure, axes, csvList, csvCounter = None, None, None, None, None, None
-x_lim, store, flag, check, y, df, plotList, isChanged = None, None, None, None, None, None, None, None
+column, current_time, figure, axes, csvList, csvCounter, isPlotChanged = None, None, None, None, None, None, None
+x_lim, store, flag, check, y, df, plotList, isCSVChanged, timer = None, None, None, None, None, None, None, None, None
 
 
 # def createList():
@@ -41,17 +41,19 @@ def copyList(list1, list2):
 
 
 def initialise():
-    global column, count_time, figure, axes, x_lim, store, flag, check, y, plotList, csvList, csvCounter, isChanged
+    global column, current_time, figure, axes, x_lim, store, flag, check, y, plotList, csvList, csvCounter, isCSVChanged, timer, isPlotChanged
 
     plotList = []
     csvList = []
     x_lim = []
-    isChanged = False
+    isCSVChanged = False
+    isPlotChanged = False
     store = 0
+    timer = 0
     csvCounter = 0
     flag = 1
     check = []
-    count_time = 0
+    current_time = 0
 
     column = np.array(['TEMPERATURE', 'ALTITUDE', 'AVG SPEED', 'PRESSURE'])
     figure, axes = subplots(nrows=1, ncols=4, figsize=(22, 5))
@@ -83,12 +85,14 @@ def axesLabel(i):
 
 
 def plotter(index):
-    global y, df, column, count_time, axes, plotList
-
-    l = plotList[count_time]
+    global y, df, column, current_time, axes, plotList, isPlotChanged, timer
+    if isPlotChanged:
+        l = plotList[current_time]
+    else:
+        l = [0, 0, 0, 0]
 
     y[column[index]].append(l[index])
-    x = np.arange(count_time)
+    x = np.arange(timer)
 
     axes[index].clear()
     axes[index].plot(x, y[column[index]])
@@ -96,17 +100,21 @@ def plotter(index):
 
 
 def animate(frame):
-    global store, count_time, df, flag
-    count_time += 1
+    global store, current_time, df, flag, isPlotChanged, timer
+    timer += 1
     store += 1
+    if current_time < len(plotList) - 1:
+        current_time += 1
+    else:
+        isPlotChanged = False
 
-    try:
-        for index in range(4):
-            plotter(index)
-    except:
-        sys.exit()
+    #try:
+    for index in range(4):
+        plotter(index)
+#except:
+#        sys.exit()
 
-    if 35 < store < 100:
+    if 35 < store:
         axesLabel(1)
         flag += 1
 
@@ -114,9 +122,10 @@ def animate(frame):
 
 
 def transferInfo(valueList):
-    global isChanged
+    global isCSVChanged, isPlotChanged
     print(valueList)
     plotList.append(valueList)
+    isPlotChanged = True
     info = {
         "TEMPERATURE": valueList[0],
         "ALTITUDE": valueList[1],
@@ -124,11 +133,12 @@ def transferInfo(valueList):
         "PRESSURE": valueList[3],
     }
     csvList.append(info)
-    isChanged = True
+    isCSVChanged = True
     print(info)
 
 
 def reader():
+    global isPlotChanged
     ser = serial.Serial(port='COM9', baudrate=9600, bytesize=serial.EIGHTBITS,
                         parity=serial.PARITY_NONE, timeout=3)
 
@@ -152,7 +162,8 @@ def reader():
                 valueList = list(map(int, data[:-2].split(',')))
                 transferInfo(valueList)
         except Exception:
-            print(plotList)
+            print(csvList)
+            #isPlotChanged = False
             print("Error - Not able to write data")
     else:
         print("Cannot Open Serial Port")
@@ -165,14 +176,14 @@ def animationPlot():
 
 
 def csvMaker():
-    global isChanged, csvList
+    global isCSVChanged, csvList
     fieldnames = ["TEMPERATURE", "ALTITUDE", "AVG SPEED", "PRESSURE"]
     t = 1
     with open('writtenData.csv', 'a') as datafile1:
         csv_writer = csv.DictWriter(datafile1, fieldnames=fieldnames)
         while True:
-            if isChanged:
-                isChanged = False
+            if isCSVChanged:
+                isCSVChanged = False
                 if t:
                     csv_writer.writerows(csvList)
                 else:
@@ -186,5 +197,5 @@ if __name__ == '__main__':
     time.sleep(4)
     plotterThread = threading.Thread(target=animationPlot())  # Plotter depending on plotList
     plotterThread.start()
-    csvThread = threading.Thread(target=csvMaker())  # Plotter depending on csvList
-    csvThread.start()
+#    csvThread = threading.Thread(target=csvMaker())  # Plotter depending on csvList
+#    csvThread.start()
