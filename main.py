@@ -8,7 +8,6 @@ import threading
 from matplotlib import style
 import sys
 import datetime
-import largeList
 
 """
 ISSUES: 
