@@ -14,7 +14,7 @@ import largeList
 ISSUES: 
 1. Agar arduino se delay toh not writing to CSV
 2. Memory Error ka safeguard
-3. Plotting ka format consistent karna hai
+3. Plotting ka format consistent karna hai    ----- DONE
 4. If no file already then CSV is created after script stops
 """
 
