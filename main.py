@@ -73,11 +73,11 @@ def axesLabel(i):
 def plotter(index):
     global y, df, column, current_time, axes, plotList, isPlotChanged, timer
     if isPlotChanged:
-        l = plotList[current_time]
+        yValues = plotList[current_time]
     else:
-        l = [0, 0, 0, 0]
+        yValues = [0, 0, 0, 0]
 
-    y[column[index]].append(l[index])
+    y[column[index]].append(yValues[index])
     x = np.arange(timer)
 
     axes[index].clear()
@@ -171,7 +171,7 @@ def csvMaker():
                   "<SP2_RELEASED>", "TEMPERATURE", "ALTITUDE", "AVG SPEED", "PRESSURE", "<GPS_LATITUDE>",
                   "<GPS_LONGITUDE>", "<GPS_ALTITUDE>", "<GPS_SATS>", "<SOFTWARE_STATE>", "<SP1_PACKET_COUNT>",
                   "<SP2_PACKET_COUNT>", "<CMD_ECHO>"]
-    firstTimeCSV = 1
+    firstTimeCSV = True
     print("CSV Thread Running \n")
 
     with open('writtenData.csv', 'w',  newline='') as csvFile:
