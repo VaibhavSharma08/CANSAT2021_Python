@@ -13,18 +13,9 @@ import largeList
 """
 ISSUES: 
 1. Agar arduino se delay toh not writing to CSV
-2. Plotting ho rhi but starting se karo, not only last
-3. Memory Error ka safeguard
-4. Plotting ka format consistent karna hai
-
-
-
-2. If no delay then pandas not reading from created CSV of reader()
-3. When reader() creating CSV toh pandas cannot access
+2. Memory Error ka safeguard
+3. Plotting ka format consistent karna hai
 4. If no file already then CSV is created after script stops
-5. TO DO: Pandas reading from stored list as a variable and plotting
-6. Dynamically access CSV for read write -> tailf can be used
-7. Arduino se data veryyyy inconsistent
 """
 
 column, current_time, figure, axes, csvList, csvCounter, isPlotChanged = None, None, None, None, None, None, None
@@ -148,7 +139,7 @@ def reader():
         except:
             continue
 
-        time.sleep(3)
+        time.sleep(3)   # Logic???
 
         try:
             ser.isOpen()
@@ -165,8 +156,7 @@ def reader():
                     valueList = list(map(int, data[:-2].split(',')))
                     transferInfo(valueList)
             except Exception:
-                print(csvList)
-                #isPlotChanged = False
+                # print(csvList)
                 print("Error - Not able to write data")
         else:
             print("Cannot Open Serial Port")
@@ -200,5 +190,5 @@ if __name__ == '__main__':
     time.sleep(4)
     plotterThread = threading.Thread(target=animationPlot())  # Plotter depending on plotList
     plotterThread.start()
-#    csvThread = threading.Thread(target=csvMaker())  # Plotter depending on csvList
+#    csvThread = threading.Thread(target=csvMaker())  # csvWriter depending on csvList
 #    csvThread.start()
