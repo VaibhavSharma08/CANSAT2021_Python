@@ -1,5 +1,5 @@
 # CANSAT2021_Kalpana_Python
-This repository contains the code for Reading, Plotting and Writing.\n
+This repository contains the code for Reading, Plotting and Writing data.
 
 **Reading** - Reads from Arduino connected through Serial Port. Currently COM9 on my computer. (Change if needed)
 
@@ -19,7 +19,7 @@ csvList -> Data written to CSV file every 6 seconds
 
 **Currently all 3 modules are fully functional and integrated.**
 
-**For running code, download and execute "requirements.txt" and "main.py" in this order.**
+**For running code, download and execute "requirements.txt" and "main.py" in this order. Also download the telemetry folder and upload the .ino file to Arduino**
 
 
 **TO DO:**
