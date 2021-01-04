@@ -13,6 +13,8 @@ import largeList
 """
 ISSUES: 
 1. Agar arduino se delay toh not writing to CSV
+
+
 2. If no delay then pandas not reading from created CSV of reader()
 3. When reader() creating CSV toh pandas cannot access
 4. If no file already then CSV is created after script stops
@@ -23,6 +25,15 @@ ISSUES:
 
 column, count_time, figure, axes = None, None, None, None
 x_lim, store, flag, check, y, df, dataList = None, None, None, None, None, None, None
+
+
+def createList():
+    global plotList
+    plotList = []
+
+
+def copyList(list1, list2):
+    list1 = list2.copy()
 
 
 def initialise():
@@ -41,6 +52,11 @@ def initialise():
     style.use('fivethirtyeight')
 
     y = {'TEMPERATURE': [], 'ALTITUDE': [], 'AVG SPEED': [], 'PRESSURE': []}
+
+    row = ["TEMPERATURE","ALTITUDE","AVG SPEED","PRESSURE"]
+    #with open('writtenData.csv', 'a') as datafile:
+    #    csv_writer = csv.writer(datafile)
+    #    csv_writer.writerow(row)
 
 
 def axesLabel(i):
@@ -61,6 +77,7 @@ def axesLabel(i):
 
 def plotter(index):
     global y, df, column, count_time, axes, dataList
+
     l = list(map(int, dataList[-1].split(',')))
 
     y[column[index]].append(l[index])
@@ -73,7 +90,6 @@ def plotter(index):
 
 def animate(frame):
     global store, count_time, df, flag
-    df = pd.read_csv('writtenData.csv')
     count_time += 1
     store += 1
 
@@ -86,8 +102,8 @@ def animate(frame):
     if 35 < store < 100:
         axesLabel(1)
         flag += 1
-    elif store > 100:  # Logic
-        sys.exit()
+    # elif store > 100:  # Logic
+    #    sys.exit()
 
     axesLabel(2)
 
@@ -103,7 +119,7 @@ def reader():
     dataList.append("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE")
     with open('writtenData.csv', 'a') as datafile1:
         csv_writer = csv.DictWriter(datafile1, fieldnames=fieldnames)
-        #csv_writer.writerow(fieldnames)
+        # csv_writer.writerow(fieldnames)
         try:
             ser.isOpen()
             print("Serial port is open")
@@ -120,9 +136,9 @@ def reader():
                     data = ser.readline().decode('ascii')
                     if t == 1:
                         t = 0
-                        dataList.append(data[1:-2])
                         l = list(map(int, data[1:-2].split(',')))
                         print(l)
+                        dataList.append(l)
                         info = {
                             "TEMPERATURE": l[0],
                             "ALTITUDE": l[1],
@@ -130,8 +146,9 @@ def reader():
                             "PRESSURE": l[3],
                         }
                     else:
-                        dataList.append(data[:-2])
                         l = list(map(int, data[:-2].split(',')))
+                        print(l)
+                        dataList.append(l)
                         info = {
                             "TEMPERATURE": l[0],
                             "ALTITUDE": l[1],
@@ -150,13 +167,21 @@ def reader():
             print("Cannot Open Serial Port")
 
 
+def animationPlot():
+    plot = animation.FuncAnimation(figure, animate, interval=1000)
+    figure.tight_layout(pad=2)
+    show()
+
+
 if __name__ == '__main__':
     initialise()
-    thread = threading.Thread(target=reader)
-    thread.start()
+    readerThread = threading.Thread(target=reader)
+    readerThread.start()
 #    print("abc")
+    time.sleep(7)
+    plotterThread = threading.Thread(target=animationPlot())
+    plotterThread.start()
+
 #    print(sys.maxsize)
 #    time.sleep(7)
-#    plot = animation.FuncAnimation(figure, animate, interval=1000)
-#    figure.tight_layout(pad=2)
-#    show()
+#
