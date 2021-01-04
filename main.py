@@ -15,11 +15,11 @@ ISSUES:
 1. Agar arduino se delay toh not writing to CSV ---- DONE
 2. Memory Error ka safeguard
 3. Plotting ka format consistent karna hai    ----- DONE
-4. If no file already then CSV is created after script stops
+4. Whenever I disconnect and reconnect, hamesha 1 se kyun shuru hota hai???
 """
 
 column, current_time, figure, axes, csvList, csvCounter, isPlotChanged = None, None, None, None, None, None, None
-x_lim, shownOnScreen, flag, check, y, df, plotList, timer, csvLen = None, None, None, None, None, None, None, None, None
+x_lim, shownOnScreen, flag, check, y, df, plotList, timer, csvLen, plotClear, buffer = None, None, None, None, None, None, None, None, None, None, None
 
 
 # def createList():
@@ -32,12 +32,14 @@ def copyList(list1, list2):
 
 
 def initialise():
-    global column, csvLen, current_time, figure, axes, x_lim, shownOnScreen, flag, check, y, plotList, csvList, csvCounter, timer, isPlotChanged
+    global column, csvLen, plotClear, buffer, current_time, figure, axes, x_lim, shownOnScreen, flag, check, y, plotList, csvList, csvCounter, timer, isPlotChanged
 
     plotList = []
     csvList = []
     x_lim = []
+    buffer = []
     isPlotChanged = False
+    plotClear = False
     shownOnScreen = 0
     timer = 0
     csvCounter = 0
@@ -86,8 +88,21 @@ def plotter(index):
 
 
 def animate(frame):
-    global shownOnScreen, current_time, df, flag, isPlotChanged, timer
+    global shownOnScreen, current_time, df, flag, isPlotChanged, timer, plotClear
     timer += 1
+    if timer % 40 == 0:
+        plotClear = True
+        i = 0
+        while current_time < len(plotList) - 1:
+            plotList[i] = plotList[current_time]
+            i += 1
+            current_time += 1
+        del plotList[i:]
+        plotList.extend(buffer.copy())
+        plotClear = False
+        buffer.clear()
+        current_time = 0
+
     shownOnScreen += 1
     if current_time < len(plotList) - 1:
         current_time += 1
@@ -113,11 +128,14 @@ def convertTime(unixTime):
 
 
 def transferInfo(valueList):
-    global isPlotChanged
+    global isPlotChanged, plotClear, buffer
     appendList = valueList[7:11].copy()
     valueList[1] = convertTime(valueList[1])
     print(appendList)
-    plotList.append(appendList)
+    if plotClear:
+        buffer.append(appendList)
+    else:
+        plotList.append(appendList)
     isPlotChanged = True
     csvList.append(valueList.copy())
     # print(info)
@@ -125,17 +143,18 @@ def transferInfo(valueList):
 
 def reader():
     global isPlotChanged
+
     plotList.append("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE")
     print("Reader Thread running")
 
     while True:
         try:
             ser = serial.Serial(port='COM9', baudrate=9600, bytesize=serial.EIGHTBITS,
-                                parity=serial.PARITY_NONE, timeout=3)
+                                parity=serial.PARITY_NONE, timeout=2)
         except:
             continue
 
-        time.sleep(3)  # Logic???
+        time.sleep(2)  # Logic???
 
         try:
             ser.isOpen()
@@ -152,7 +171,6 @@ def reader():
                     valueList = list(map(int, data[:-2].split(',')))
                     transferInfo(valueList)
             except:
-                #print(csvList)
                 print("Error - Not able to read data")
         else:
             print("Cannot Open Serial Port")
@@ -174,11 +192,11 @@ def csvMaker():
     firstTimeCSV = True
     print("CSV Thread Running \n")
 
-    with open('writtenData.csv', 'w',  newline='') as csvFile:
+    with open('writtenData.csv', 'w', newline='') as csvFile:
         csv_writer = csv.writer(csvFile)
         csv_writer.writerow(fieldnames)
         while True:
-            time.sleep(6)   # 6n seconds = 6n +- 1 packets
+            time.sleep(4)  # 4n seconds = 4n +- 1 packets
             if firstTimeCSV:
                 firstTimeCSV = False
                 csv_writer.writerows(csvList)
@@ -190,7 +208,7 @@ def csvMaker():
                 csvFile.flush()
 
 
-if __name__ == '__main__':
+def main():
     initialise()
     readerThread = threading.Thread(target=reader)
     csvThread = threading.Thread(target=csvMaker)  # csvWriter depending on csvList
@@ -198,4 +216,8 @@ if __name__ == '__main__':
     readerThread.start()
     time.sleep(4)
     csvThread.start()
-    animationPlot()         # Plotter depending on plotList
+    animationPlot()  # Plotter depending on plotList
+
+
+if __name__ == '__main__':
+    main()
