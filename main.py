@@ -19,7 +19,7 @@ ISSUES:
 """
 
 column, current_time, figure, axes, csvList, csvCounter, isPlotChanged = None, None, None, None, None, None, None
-x_lim, store, flag, check, y, df, plotList, isCSVChanged, timer = None, None, None, None, None, None, None, None, None
+x_lim, store, flag, check, y, df, plotList, isCSVChanged, timer, csvLen = None, None, None, None, None, None, None, None, None, None
 
 
 # def createList():
@@ -32,7 +32,7 @@ def copyList(list1, list2):
 
 
 def initialise():
-    global column, current_time, figure, axes, x_lim, store, flag, check, y, plotList, csvList, csvCounter, isCSVChanged, timer, isPlotChanged
+    global column, csvLen, current_time, figure, axes, x_lim, store, flag, check, y, plotList, csvList, csvCounter, isCSVChanged, timer, isPlotChanged
 
     plotList = []
     csvList = []
@@ -42,6 +42,7 @@ def initialise():
     store = 0
     timer = 0
     csvCounter = 0
+    csvLen = 0
     flag = 1
     check = []
     current_time = 0
@@ -124,7 +125,7 @@ def transferInfo(valueList):
     print(appendList)
     plotList.append(appendList)
     isPlotChanged = True
-    info = {
+    """info = {
         "<TEAM_ID>": valueList[0],
         "<MISSION_TIME>": valueList[1],
         "<PACKET_COUNT>": valueList[2],
@@ -146,6 +147,8 @@ def transferInfo(valueList):
         "<CMD_ECHO>": valueList[18],
     }
     csvList.append(info)
+    """
+    csvList.append(valueList.copy())
     isCSVChanged = True
     # print(info)
 
@@ -178,7 +181,7 @@ def reader():
                     valueList = list(map(int, data[:-2].split(',')))
                     transferInfo(valueList)
             except:
-                #print(csvList)
+                print(csvList)
                 print("Error - Not able to read data")
         else:
             print("Cannot Open Serial Port")
@@ -188,21 +191,31 @@ def animationPlot():
     plot = animation.FuncAnimation(figure, animate, interval=1000)
     figure.tight_layout(pad=2)
     show()
+    csvMaker()
 
 
 def csvMaker():
-    global isCSVChanged, csvList
-    fieldnames = ["TEMPERATURE", "ALTITUDE", "AVG SPEED", "PRESSURE"]
+    global isCSVChanged, csvList, plotList, csvLen
+    fieldnames = ["<TEAM_ID>", "<MISSION_TIME>", "<PACKET_COUNT>", "<PACKET_TYPE>", "<MODE>", "<SP1_RELEASED>",
+                  "<SP2_RELEASED>", "TEMPERATURE", "ALTITUDE", "AVG SPEED", "PRESSURE", "<GPS_LATITUDE>",
+                  "<GPS_LONGITUDE>", "<GPS_ALTITUDE>", "<GPS_SATS>", "<SOFTWARE_STATE>", "<SP1_PACKET_COUNT>",
+                  "<SP2_PACKET_COUNT>", "<CMD_ECHO>"]
     t = 1
-    with open('writtenData.csv', 'a') as datafile1:
-        csv_writer = csv.DictWriter(datafile1, fieldnames=fieldnames)
+    print("abcdef")
+    with open('writtenData.csv', 'w',  newline='') as datafile1:
+        csv_writer = csv.writer(datafile1)
+        csv_writer.writerow(fieldnames)
         while True:
-            if isCSVChanged:
-                isCSVChanged = False
-                if t:
-                    csv_writer.writerows(csvList)
-                else:
-                    csv_writer.writerow(csvList[-1])
+            time.sleep(6)   # 6n + 2 seconds = 6n packets
+            if t == 1:
+                t = 0
+                csv_writer.writerows(csvList)
+                csvLen = len(csvList)
+                datafile1.flush()
+            else:
+                csv_writer.writerows(csvList[csvLen:])
+                csvLen = len(csvList)
+                datafile1.flush()
 
 
 if __name__ == '__main__':
@@ -210,7 +223,8 @@ if __name__ == '__main__':
     readerThread = threading.Thread(target=reader)
     readerThread.start()
     time.sleep(4)
-    plotterThread = threading.Thread(target=animationPlot())  # Plotter depending on plotList
-    plotterThread.start()
 #    csvThread = threading.Thread(target=csvMaker())  # csvWriter depending on csvList
 #    csvThread.start()
+    plotterThread = threading.Thread(target=animationPlot())  # Plotter depending on plotList
+    plotterThread.start()
+#    csvMaker()
