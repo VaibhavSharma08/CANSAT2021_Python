@@ -13,6 +13,10 @@ import largeList
 """
 ISSUES: 
 1. Agar arduino se delay toh not writing to CSV
+2. Plotting ho rhi but starting se karo, not only last
+3. Memory Error ka safeguard
+4. Plotting ka format consistent karna hai
+
 
 
 2. If no delay then pandas not reading from created CSV of reader()
@@ -24,10 +28,10 @@ ISSUES:
 """
 
 column, count_time, figure, axes, csvList, csvCounter = None, None, None, None, None, None
-x_lim, store, flag, check, y, df, plotList = None, None, None, None, None, None, None
+x_lim, store, flag, check, y, df, plotList, isChanged = None, None, None, None, None, None, None, None
 
 
-#def createList():
+# def createList():
 #    global plotList
 #    plotList = []
 
@@ -37,11 +41,12 @@ def copyList(list1, list2):
 
 
 def initialise():
-    global column, count_time, figure, axes, x_lim, store, flag, check, y, plotList, csvList, csvCounter
+    global column, count_time, figure, axes, x_lim, store, flag, check, y, plotList, csvList, csvCounter, isChanged
 
     plotList = []
     csvList = []
     x_lim = []
+    isChanged = False
     store = 0
     csvCounter = 0
     flag = 1
@@ -80,7 +85,7 @@ def axesLabel(i):
 def plotter(index):
     global y, df, column, count_time, axes, plotList
 
-    l = plotList[-1]
+    l = plotList[count_time]
 
     y[column[index]].append(l[index])
     x = np.arange(count_time)
@@ -104,10 +109,23 @@ def animate(frame):
     if 35 < store < 100:
         axesLabel(1)
         flag += 1
-    # elif store > 100:  # Logic
-    #    sys.exit()
 
     axesLabel(2)
+
+
+def transferInfo(valueList):
+    global isChanged
+    print(valueList)
+    plotList.append(valueList)
+    info = {
+        "TEMPERATURE": valueList[0],
+        "ALTITUDE": valueList[1],
+        "AVG SPEED": valueList[2],
+        "PRESSURE": valueList[3],
+    }
+    csvList.append(info)
+    isChanged = True
+    print(info)
 
 
 def reader():
@@ -118,7 +136,6 @@ def reader():
     # datafile1 = open('writtenData.csv', 'w')
     # datafile1.write("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE\n")
     plotList.append("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE")
-    csvList.append("TEMPERATURE,ALTITUDE,AVG SPEED,PRESSURE")
 
     try:
         ser.isOpen()
@@ -127,27 +144,13 @@ def reader():
         print("Error - Serial Port not Open")
         exit()
 
-    t = 1
-
     if ser.isOpen():
         try:
             while True:
                 time.sleep(1)
                 data = ser.readline().decode('ascii')
                 valueList = list(map(int, data[:-2].split(',')))
-                print(valueList)
-                plotList.append(valueList)
-                csvList.append(valueList)
-                info = {
-                    "TEMPERATURE": valueList[0],
-                    "ALTITUDE": valueList[1],
-                    "AVG SPEED": valueList[2],
-                    "PRESSURE": valueList[3],
-                }
-                print(info)
-                # print("abcdef")
-                # print(dataWrite[:-1])
-                # datafile.writerow(dataWrite)
+                transferInfo(valueList)
         except Exception:
             print(plotList)
             print("Error - Not able to write data")
@@ -162,17 +165,25 @@ def animationPlot():
 
 
 def csvMaker():
+    global isChanged, csvList
     fieldnames = ["TEMPERATURE", "ALTITUDE", "AVG SPEED", "PRESSURE"]
+    t = 1
     with open('writtenData.csv', 'a') as datafile1:
         csv_writer = csv.DictWriter(datafile1, fieldnames=fieldnames)
+        while True:
+            if isChanged:
+                isChanged = False
+                if t:
+                    csv_writer.writerows(csvList)
+                else:
+                    csv_writer.writerow(csvList[-1])
 
 
 if __name__ == '__main__':
     initialise()
     readerThread = threading.Thread(target=reader)
     readerThread.start()
-#    print("abc")
-    time.sleep(7)
+    time.sleep(4)
     plotterThread = threading.Thread(target=animationPlot())  # Plotter depending on plotList
     plotterThread.start()
     csvThread = threading.Thread(target=csvMaker())  # Plotter depending on csvList
