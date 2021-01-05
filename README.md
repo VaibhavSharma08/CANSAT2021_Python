@@ -24,9 +24,9 @@ csvList -> Data written to CSV file every 4 seconds
 
 **Issues:**
 
-0. matplotlib ke through transition and movement fix karo....  ------ DONE
+****0. Whenever disconnect and reconnect, why does it always start from packet 1?****
 
-***1. Whenever disconnect and reconnect, why does it always start from packet 1?***
+1. matplotlib ke through transition and movement fix karo....  ------ DONE
 2. Implement memory safeguards against Memory Errors being caused due to list becoming full ------ DONE
 3. CSV aur plotting dono mein 0000 direct append ho ---- csv mein nhi karna
 4. CSV mein disconnect aur connect par number of 0000 packets not equal to ideally received packets ---- append nhi karna toh np
