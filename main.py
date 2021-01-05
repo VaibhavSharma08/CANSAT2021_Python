@@ -60,13 +60,13 @@ def initialise():
 
 
 def axesLabel(i):
-    global flag, shownOnScreen, axes
+    global flag, axes
 
     if i == 1:
-        axes[0].set_xlim(flag, flag + shownOnScreen)
-        axes[1].set_xlim(flag, flag + shownOnScreen)
-        axes[2].set_xlim(flag, flag + shownOnScreen)
-        axes[3].set_xlim(flag, flag + shownOnScreen)
+        axes[0].set_xlim(flag, flag + 30)
+        axes[1].set_xlim(flag, flag + 30)
+        axes[2].set_xlim(flag, flag + 30)
+        axes[3].set_xlim(flag, flag + 30)
 
     if i == 2:
         axes[0].set_ylabel('Temperature (C)')
@@ -133,7 +133,7 @@ def animate(frame):
     except:
         sys.exit()
 
-    if shownOnScreen > 35:
+    if shownOnScreen > 30:
         axesLabel(1)
         flag += 1
 
