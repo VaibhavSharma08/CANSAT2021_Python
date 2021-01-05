@@ -12,6 +12,7 @@ import datetime
 """
 ISSUES: 
 *** Whenever I disconnect and reconnect, hamesha 1 se kyun shuru hota hai???
+*** Transition and movement thik karo so that 100 are there in one frame
 
 
 ** CSV aur plotting dono mein 0000 direct append ho ---- csv mein nhi karna
@@ -179,7 +180,7 @@ def reader():
 
     while True:
         try:
-            ser = serial.Serial(port='COM10', baudrate=9600, bytesize=serial.EIGHTBITS,
+            ser = serial.Serial(port='COM9', baudrate=9600, bytesize=serial.EIGHTBITS,
                                 parity=serial.PARITY_NONE, timeout=4)
         except:
             continue
