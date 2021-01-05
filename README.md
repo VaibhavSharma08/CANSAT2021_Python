@@ -22,12 +22,12 @@ csvList -> Data written to CSV file every 6 seconds
 **For running code, download and execute "requirements.txt" and "main.py" in this order. Also download the telemetry folder and upload the .ino file to Arduino**
 
 
-**TO DO:**
-
-1. Implement memory safeguards against Memory Errors being caused due to list becoming full. ------ DONE
-2. 0000 packet should be automatically appended to csvList and plotList instead of having seperate conditions.
-3. Policy on Missed/0000 packets?
-4. Whenever disconnect and reconnect, why does it always start from packet 1?
+**Issues:**
+1. Whenever disconnect and reconnect, why does it always start from packet 1?
+2. Implement memory safeguards against Memory Errors being caused due to list becoming full ------ DONE
+3. CSV aur plotting dono mein 0000 direct append ho ---- csv mein nhi karna
+4. CSV mein disconnect aur connect par number of 0000 packets not equal to ideally received packets ---- append nhi karna toh np
+5. What is the policy on missed packets? ---- plotting mein 0, csv mein nhi, missed packets counted by packet number
 
 
 **Created By: Vaibhav Sharma**
