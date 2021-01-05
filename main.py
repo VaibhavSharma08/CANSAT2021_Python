@@ -180,11 +180,11 @@ def reader():
     while True:
         try:
             ser = serial.Serial(port='COM10', baudrate=9600, bytesize=serial.EIGHTBITS,
-                                parity=serial.PARITY_NONE, timeout=2)
+                                parity=serial.PARITY_NONE, timeout=4)
         except:
             continue
 
-        time.sleep(2)  # Logic???
+        #time.sleep(2)  # Logic???
 
         try:
             ser.isOpen()
@@ -196,7 +196,6 @@ def reader():
         if ser.isOpen():
             try:
                 while True:
-                    time.sleep(1)
                     data = ser.readline().decode('ascii')
                     valueList = list(map(int, data[:-2].split(',')))
                     transferInfo(valueList)
@@ -230,18 +229,6 @@ def csvMaker():
             time.sleep(4)  # 4n seconds = 4n +- 1 packets
             csvTime += 1
 
-            """
-                if csvLen == len(csvList):
-                temp_list = csvList[-1].copy()
-                temp_list[7] = 0
-                temp_list[8] = 0
-                temp_list[9] = 0
-                temp_list[10] = 0
-                csv_writer.writerow(temp_list)
-                csvFile.flush()
-                continue
-            """
-
             if csvTime % 5 == 0:
                 csvClear = True
                 i = 0
@@ -274,7 +261,7 @@ def main():
     csvThread = threading.Thread(target=csvMaker)  # csvWriter depending on csvList
 
     readerThread.start()
-    time.sleep(4)
+    time.sleep(1)
     csvThread.start()
     animationPlot()  # Plotter depending on plotList
 
