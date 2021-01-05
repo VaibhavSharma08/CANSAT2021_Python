@@ -68,6 +68,7 @@ def axesLabel(i):
         axes[2].set_xlim(flag, flag + 30)
         axes[3].set_xlim(flag, flag + 30)
 
+
     if i == 2:
         axes[0].set_ylabel('Temperature (C)')
         axes[1].set_ylabel('Altitude (m)')
