@@ -11,16 +11,16 @@ import datetime
 
 """
 ISSUES: 
-** CSV aur plotting dono mein 0000 direct append ho
-** CSV mein disconnect aur connect par number of 0000 packets not equal to ideally received packets
-** What is the policy on missed packets?
-** Whenever I disconnect and reconnect, hamesha 1 se kyun shuru hota hai???
+*** Whenever I disconnect and reconnect, hamesha 1 se kyun shuru hota hai???
 
 
-1. Agar arduino se delay toh not writing to CSV ---- DONE
-2. Memory Error ka safeguard --- DONE
-3. Plotting ka format consistent karna hai    ----- DONE
-4. Whenever I disconnect and reconnect, hamesha 1 se kyun shuru hota hai???
+** CSV aur plotting dono mein 0000 direct append ho ---- csv mein nhi karna
+** CSV mein disconnect aur connect par number of 0000 packets not equal to ideally received packets ---- append nhi karna toh np
+** What is the policy on missed packets? ---- plotting mein 0, csv mein nhi, missed packets counted by packet number
+
+* Agar arduino se delay toh not writing to CSV ---- DONE
+* Memory Error ka safeguard --- DONE
+* Plotting ka format consistent karna hai    ----- DONE
 """
 
 column, current_time, figure, axes, csvList, =  None, None, None, None, None
@@ -76,8 +76,10 @@ def axesLabel(i):
 
 def plotter(index):
     global y, column, current_time, axes, plotList, isPlotChanged, timer
+
     if isPlotChanged:
         yValues = plotList[current_time]
+        #print(plotList)
     else:
         yValues = [0, 0, 0, 0]
 
@@ -91,13 +93,18 @@ def plotter(index):
 
 def clearPlotList():
     global current_time, flag, timer, plotClear, plotBuffer
+
     plotClear = True
     i = 0
-    while current_time < len(plotList) - 1:
-        plotList[i] = plotList[current_time]
+    #time.sleep(1)
+    while current_time < len(plotList):
+        plotList[i] = plotList[current_time].copy()
         i += 1
         current_time += 1
+
     del plotList[i:]
+    #print("Plot Buffer: ")
+    #print(plotBuffer)
     plotList.extend(plotBuffer.copy())
     plotClear = False
     plotBuffer.clear()
@@ -106,10 +113,14 @@ def clearPlotList():
 
 def animate(frame):
     global shownOnScreen, current_time, flag, isPlotChanged, timer
+
     timer += 1
-    if timer % 40 == 0:
+
+    if timer % 20 == 0:
         clearPlotList()
+
     shownOnScreen += 1
+
     if current_time < len(plotList) - 1:
         current_time += 1
     else:
@@ -121,7 +132,7 @@ def animate(frame):
     except:
         sys.exit()
 
-    if 35 < shownOnScreen:
+    if shownOnScreen > 35:
         axesLabel(1)
         flag += 1
 
@@ -135,14 +146,25 @@ def convertTime(unixTime):
 
 def transferInfo(valueList):
     global isPlotChanged, plotClear, csvBuffer, plotBuffer, csvClear
+
     appendList = valueList[7:11].copy()
     valueList[1] = convertTime(valueList[1])
     print(appendList)
+
     if plotClear:
+        #plotBuffer.append(plotList[-1])
         plotBuffer.append(appendList)
+        #print("Transfer bufferList")
+        #print(plotBuffer)
     else:
         plotList.append(appendList)
+
+
+    #print("Transfer PlotList")
+    #print(plotList)
+
     isPlotChanged = True
+
     if csvClear:
         csvBuffer.append(valueList.copy())
     else:
@@ -157,7 +179,7 @@ def reader():
 
     while True:
         try:
-            ser = serial.Serial(port='COM9', baudrate=9600, bytesize=serial.EIGHTBITS,
+            ser = serial.Serial(port='COM10', baudrate=9600, bytesize=serial.EIGHTBITS,
                                 parity=serial.PARITY_NONE, timeout=2)
         except:
             continue
@@ -193,6 +215,7 @@ def animationPlot():
 
 def csvMaker():
     global csvList, csvLen, csvTime, csvBuffer, csvClear
+
     fieldnames = ["<TEAM_ID>", "<MISSION_TIME>", "<PACKET_COUNT>", "<PACKET_TYPE>", "<MODE>", "<SP1_RELEASED>",
                   "<SP2_RELEASED>", "TEMPERATURE", "ALTITUDE", "AVG SPEED", "PRESSURE", "<GPS_LATITUDE>",
                   "<GPS_LONGITUDE>", "<GPS_ALTITUDE>", "<GPS_SATS>", "<SOFTWARE_STATE>", "<SP1_PACKET_COUNT>",
@@ -207,7 +230,8 @@ def csvMaker():
             time.sleep(4)  # 4n seconds = 4n +- 1 packets
             csvTime += 1
 
-            if csvLen == len(csvList):
+            """
+                if csvLen == len(csvList):
                 temp_list = csvList[-1].copy()
                 temp_list[7] = 0
                 temp_list[8] = 0
@@ -216,6 +240,7 @@ def csvMaker():
                 csv_writer.writerow(temp_list)
                 csvFile.flush()
                 continue
+            """
 
             if csvTime % 5 == 0:
                 csvClear = True
@@ -244,6 +269,7 @@ def csvMaker():
 
 def main():
     initialise()
+
     readerThread = threading.Thread(target=reader)
     csvThread = threading.Thread(target=csvMaker)  # csvWriter depending on csvList
 
